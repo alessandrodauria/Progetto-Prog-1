@@ -1,198 +1,216 @@
-//  main.c
-//                          ****************************
-//                          * [SIMULATORE AUTOSCONTRO] *
-//                          ****************************
+
 
 //                           [FINALITA' DEL PROGRAMMA]
 
-// il seguente programma simula l'autoscontro, abbiamo quattro macchine poste al centro
-// dei quattro lati opposti di una griglia 8 x 8. Le auto possono muoversi all'interno 
-// della griglia una alla volta in una delle quattro posizioni vicine, il movimento delle 
-// auto è dato dalla generazione del numero casuale, infatti ognuna delle 4 auto può muoversi
-// a destra a sinistra in avanti e indietro con una certa probabilità, quindi in base al 
-// numero casuale che esce che va da 1 a 100 l'auto andrà nella direzione corretta. Infine
-// la simulazione finisce quando si verifica uno scontro tra almeno due macchine
+// Il seguente programma simula la gestione di un riciclatore automatico di rifiuti. 
+// Permette all'utente di riciclare 5 tipi di categorie di rifiuti differenti come plastica,
+// alluminio, carta, vetro e umido. Ogni tipo di categoria presenta una lista di prodotti 
+// possibili da smaltire. Inoltre ogni prodotto è identificato da un nome, codice identificativo 
+// e dal prezzo di riciclo. il nostro riciclatore presenta un budget iniziale il quale viene decrementato
+// ogni qualvolta che si ricicla un prodotto, se il budget è presente allora si procede allo smaltimento,
+// inoltre ogni singolo rifiuto può essere smaltito Massimo 20 volte. Un'altra delle funzioni più importanti  
+// è la possibilità di visualizzare l'elenco dei prodotti riciclati.  
+//------------------------------------------------------------------------------------------------------------
 
-
-//-------------------------------------------------------------------------------------------------
 //                          [INCLUSIONE DELLE LIBRERIE]
 
 //                          Includo le librerie standard 
 
-// "stdio.h" è libreria standard del C che contiene definizioni di macro,
+// "STDIO.h" è libreria standard del C che contiene definizioni di macro,
 // costanti e dichiarazioni di funzioni e tipi usati per le varie operazioni di input/output.
 #include <stdio.h>
-// "stdlib.h" dichiara funzioni e costanti di utilità generale: allocazione della memoria,
+// "STDLIB.h" dichiara funzioni e costanti di utilità generale: allocazione della memoria,
 // controllo dei processi, e altre funzioni generali comprendenti anche i tipi di dato.
 #include <stdlib.h>
-//time.h è l'header file della libreria standard del C che fornisce un accesso standardizzato
-// alle funzioni di acquisizione e manipolazione del tempo.
-#include <time.h>
 //                           Includo la mia libreria 
-// "auto.h" implementa l'enum, struct e funzioni che servono per il corretto funzionamento 
+// "RECYCLER.h" implementa l'enum, struct e funzioni che servono per il corretto funzionamento 
 // del programma.
-#include "auto.h"
-
+#include "recycler.h"
+ 
 //-------------------------------------------------------------------------------------------------------------
 
 //                                       [STRUCT]
 
- // Di seguito è riportato l'elenco di auto che partecipano all'autoscontro,
- //  ogni auto è identificata dalle coordinate x e y, presenta il proprio simbolo identificativo,
- // inolte sono state implementate anche le percentuali in base alle quali l'auto va a destra,
- // sinistra, avanti e indietro.
-car_struct cars[] = {
-    {"Ferrari Mondial", 3, 0, 'A', 30, 10, 30, 30},
-    {"Maserati Biturbo", 0, 3, 'B', 40, 10, 15, 35},
-    {"Porsche 914", 3, 7, 'C', 30, 20, 5, 45},
-    {"Fiat 130", 7, 3, 'D', 20, 30, 25, 25}
+ // Di seguito è riportato un elenco di rifiuti che è possibile smaltire,
+ // i rifiuti sono divisi in 5 categirie, plastica, allumionio, carta, vetro e umido. 
+ // Ogni prodotto è identificato da un nome, codice identificativo e prezzo di riciclo.
+ // Inoltre lo smaltimento di ogni prodotto è stato inizializzato a 0, in modo tale che 
+ // ogni volta che viene reciclato un prodotto questo viene incrementato a un Massimo di 20 unità. 
+
+product_struct products_list[] = {
+   //-------------Plastica-----------------
+   {"bottiglie", 2, 0.15, 0},
+   {"flaconi", 2, 0.15, 0},
+   {"pellicole di giornali e riviste", 2, 0.20, 0},
+   {"film e pellicole", 2, 0.18, 0},
+   //-------------Allumionio------------------
+   {"lattine", 5, 0.14, 0},
+   {"tappi e capsule", 5, 0.14, 0},
+   {"tubetti", 5, 0.14, 0},
+   {"coperchi per yogurt", 5, 0.14, 0},
+   {"fogli in alluminio per alimenti", 5, 0.14, 0},
+   {"bombolette spray non infiammabili", 5, 0.19, 0},
+   {"scatoletta e barattoli per carne,pesci e legumi", 5, 0.14, 0},
+   //---------------Carta-----------------
+   {"giornali, riviste, libri, quaderni", 3, 0.16, 0},
+   {"moduli continui", 3, 0.16, 0},
+   {"scatole di prodotti alimentari e imballaggi in cartone", 3, 0.16, 0},
+   {"poliaccoppiati, senza parti in plastica e residui", 3, 0.16, 0},
+   //---------------Vetro-----------------
+   {"bicchiere di vetro", 1, 0.17, 0},
+   {"vasetti di vetro", 1, 0.17, 0},
+   {"vetri rotti", 1, 0.17, 0},
+   {"flaconi (no medicinali)", 1, 0.17, 0},
+   {"bottiglie di vetro", 1, 0.17, 0},
+   //----------------Umido-------------------
+   {"resti di frutta e ortaggi", 4, 0.18, 0},
+   {"resti di carne e pesce", 4, 0.18, 0},
+   {"alimenti deteriorati", 4, 0.21, 0},
+   {"carta e cartone sporchi", 4, 0.25, 0},
+   {"fondi di te' e caffe'", 4, 0.29, 0},
+   {"gusci d'uovo", 4, 0.24, 0},
+
 };
 
+// Con la seguente struct inizializzo il budget iniziale del reciclatore 
+recycler_struct recycler = {
+  100.00, products_list
+};
+
+int main(){
+  //-------------------------------------------------------------------------------------------------------------------------------
+  //                                                [DICHIARAZIONE DELLE VARIABILI]
+  // Utilizzo la variabile ' menu_chice ' di tipo intero, per rappresentare un numero che va da 0 a n,
+  // quando facciamo lo 'scanf' chiediamo all'utente di memorizzare all'interno di menu_choice la sua scelta,
+  // che da menù può essere o [1, 2 , 3].  
+  int menu_choice;
 
 
-int main(int argc, const char * argv[]) {
-    //-------------------------------------------------------------------------------------------------------------------------------
-    //                                                [DICHIARAZIONE DELLE VARIABILI]
+  // Utilizzo la variabile ' product_list ' di tipo intero, per rappresentare un numero intero che va da 0 a n,
+  // quando facciamo lo 'scanf' chiediamo all'utente di memorizzare all'interno di product_choice la sua scelta,
+  // che va da [1 a 26].  
+  int product_choice;
 
-    // Utilizzo le variabili k,j di tipo intero, necessari per iterare il ciclo for  
-    int k,j;
+  // Vriabile di tipo intero che utilizzo nel ' while ' che mette in funzione il "clear buffer".
+  int ch;
 
-    // Utilizzo "casual_number", variabile di tipo intero all'interno della quale viene
-    // salvato il numero casuale  
-    int casual_number;
+  // Dichiaro una variabile di tipo puntatore che punta ad un tipo della struct ' recycler_struct ',
+  // ed è uguale all'inirizzo di memoria di ' recycler '. Serve per cambiare il valore di una variabile 
+  // passando il suo indirizzo di memoria.
+  recycler_struct *rec = &recycler;
 
-    // Utilizzo la variabile "a" di tipo intero,mi serve quando facciamo lo 'scanf'
-    // chiediamo all'utente di memorizzare all'interno di "a" la sua scelta,
-    // così da proseguire il gioco  
-    int a;
+  //-----------------------------------------------------------------------------------------------------------------------------------
+    //                                                    INTRODUZIONE
 
-    // Utilizzo la variabile "direction_car" di tipo direction, che serve per far capire 
-    // all'auto quando deve andare a destra, sinistra, avanti o indietro
-    direction direction_cars;
+    printf("\n\n***************************** BENVENUTO, SONO UN RICICLATORE DI RIFIUTI **************************************\n");
 
-    // Utilizzo "matrix[8][8]" la variabile di tipo char 
-    char matrix[8][8];
+    printf("\n----------------------------------------------------------------------------------------------------------------\n");
+    printf("|   Perche' riciclare? Riciclare i rifiuti significa valorizzare i rifiuti, recuperando materie prime,         |\n");
+    printf("|   anziche' smaltirli direttamente in discarica ed inceneritori. Questa attivita',                            |\n");
+    printf("|   e' indispensabile per aiutare il nostro pianeta, in quanto riduce il consumo di materie prime,             |\n");
+    printf("|   l' utilizzo di energia e l' emissione di gas serra associati!                                              |\n");
+    printf("----------------------------------------------------------------------------------------------------------------\n\n");
 
-    //inizializzo la matrice a vuoto  
-    for (k = 0; k < 8; k++) {
-        for (j = 0; j < 8; j++) {
-            matrix[k][j] = ' ';
+    // Utilizzo il costrutto ' while ' per far entrare in ciclo continuo le opzioni proposte all'utente 
+    // ovvero il ' Menù '. Nel while posiziono (-1) perchè fino a quando la scelta dall'utente non sarà (-1)
+    // il programma si ripeterà all'infinito fino a quando l'utente non preme 3, funzione che termina il programma.
+    while(menu_choice != -1){
+
+        printf("Come ti posso aiutare?\n\n");
+        
+        // MENU' = Opzioni proposte all'utente.
+        printf("- Per reciclare il prodotto premi 1\n");
+        printf("- Per mostrare il resoconto della giornata premi 2\n");
+        printf("- Per uscire premi 3\n\n");
+        
+        printf("inserisci la tua scelta: ");
+
+        // Viene considerata la selezione dell'utente ed 
+        // e' memorizzata nella variabile ' menu_choice '. 
+        scanf("%d", &menu_choice);
+
+         //mette in funzione il "clear buffer"
+        while((ch = getchar()) != '\n'&& ch != EOF);    
+        
+        // Lo swich gestisce le casistiche che il valore menu_choice può assume 
+        switch (menu_choice)
+        {
+            // quando assumera valore 1 -> permette all'utente di scegliere il prodotto che desidera smaltire,
+            // verifica se non sono stati smaltiti più di 20 prodotti, e se il denaro non è esaurito. 
+            case 1:
+                
+                printf("\n-------------------------------------");
+                printf("\n-  scegli il prodotto da smaltire:  -\n");
+                printf("-------------------------------------\n\n");
+                
+                printProductList(products_list);           /*------funzione in libreria*/
+                
+                printf("\ninserisci la tua scelta: ");
+                scanf("%d", &product_choice);
+                while((ch = getchar()) != '\n'&& ch != EOF);
+                printf("\nHai scelto di smaltire: %s\n", products_list[product_choice-1].name);
+                
+                // Funzione che verifica se il prodotto non è stato smaltito più di 20 volte
+                // se non è stato smaltito più di 20 volte, si pasa alla funzione ' isBudgetAvailable ' 
+                // se è stato smaltito già 20 volte allora vai a ' else '
+                if (isProductAvailable(product_choice, products_list)) {
+
+                    // Funzione che verifica se il budget a disposizione non è esaurito,
+                    // se non è esaurito, si passa alla funzione che incrementa il numero
+                    // di prodotti smaltiti 'increaseRecycledProduct' .
+                    if (isBudgetAvailable(product_choice, products_list, rec)) {
+
+                        // Funzione che incrementa il numero di prodotti smaltiti 
+                        increaseRecycledProduct(product_choice, products_list);
+
+                        // Funzione che decrementa il budget ogni volta che viene smaltito un prodotto 
+                        decreseBudget(product_choice, products_list, rec);
+                        
+                        // L
+                        printf("Oggi puoi smaltire ancora %d %s", (MAX_NUMBER_OF_PRODUCT - products_list[product_choice-1].number_of_pruducts), products_list[product_choice-1].name);
+                        printf("\n\n**************************\n");
+                        printf("* SALDO RIMANENTE %0.2f *\n", recycler.initial_budget);
+                        printf("**************************\n\n"); 
+    
+                    // Caso in cui il saldo a disposizione è esaurito     
+                    } else {
+                        printf("\nSaldo esaurito");
+                        printf("\nContattare asitestenza clienti 334 889 2230\n");
+                        return 0;
+                    }
+
+                // Caso in cui il prodotto è stato smaltito più di 20 volte    
+                } else {
+                    printf("\n\n-----------------------------------------------");
+                    printf("\nNon posso piu' smaltire questo tipo di prodotto\n");
+                }
+                break;
+
+            // valore 2 -> Stampa la lista dei prodotti smaltiti fino a quel momento.    
+            case 2:
+                printf("\nOggi sono stati smaltiti:\n");
+
+                // Funzione che stampa la lista dei prodotti smaltiti fino al momento della richiesta dell'utente.
+                printRecycledProduct(products_list);
+                printf("\n\n");
+                break;
+
+             // valore 3 -> esce dal programma.    
+            case 3:
+                printf("       _-_\n    /~~   ~~\\ \n /~~         ~~\\\n{               }\n \\  _-     -_  /\n   ~  \\\\ //  ~\n_- -   | | _- _\n  _ -  | |   -_\n      // \\\\\n");
+                printf("Grazie, con il tuo contributo hai migliorato l'ambiente");
+                
+                return 0;
+                
+            // Caso in cuoi l'utente inserisca una sceltà non prevista dal programma.    
+            default:
+                printf("\aSCELTA' NON VALIDA\n\n");
+                break;
         }
-    }
-    
-    // inizializzo le posizioni iniziali delle auto, assegnando le coordinate x e y.
-    matrix[3][0] = cars[0].symbol;
-    matrix[0][3] = cars[1].symbol;
-    matrix[3][7] = cars[2].symbol;
-    matrix[7][3] = cars[3].symbol;
-    
-    
-    printf("\n");   
-    printf(" ");    
-    
-    // Funzione che stampa la griglia di gioco 
-    viewMatrix(matrix);
-    
-    // Variabile che indica se le auto si sono scontrate 
-    bool crashed = false;
+        printf("\n=============================================================\n\n");
+    } 
 
-    // Se la condzione risulta falsa allora il ciclo while itera finchè 
-    // la condizione non risulta vera
-    while (!crashed) {
-
-        // Ad ogni turno itero tutte le 4 auto 
-        for (k = 0; k < 4; k++) {
-            casual_number =  nCasual();
-            direction_cars = enumerationIndex(casual_number, cars[k].right, cars[k].left, cars[k].forwars);
-            
-            // Lo swich gestisce le casistiche che il valore "direction_cars" può assume.
-            switch (direction_cars) {
-
-                // Quando assumerà caso "avanti", e l'auto non si trova sul margine superiore   
-                case avanti: 
-
-                    if (cars[k].x > 0) {
-                        // Cancello vecchia posizione
-                        matrix[cars[k].x][cars[k].y] = ' ';
-                        // muovo in avanti
-                        cars[k].x -= 1;                                       
-                        matrix[cars[k].x][cars[k].y] = cars[k].symbol;  
-                        printf("La %s con simbolo %c si e' spostata in avanti in [%d][%d]\n", cars[k].name, cars[k].symbol,cars[k].x+1, cars[k].y+1);
-                        crashed = collision(cars);
-
-                    // Altrimenti rimani fermo    
-                    }else{
-                        printf("La %s con simbolo %c e' rimasta ferma\n\n", cars[k].name, cars[k].symbol);
-                    }
-                    
-                    break;
-
-                // Quando assumerà caso "indietro", e l'auto non si trova sul bordo inferiore    
-                case indietro:
-
-                    if (cars[k].x < COLUMNS_AND_LINES-1){
-                        // Cancello vecchia posizione
-                        matrix[cars[k].x][cars[k].y] = ' ';
-                        // Muovo in indietro
-                        cars[k].x += 1;
-                        matrix[cars[k].x][cars[k].y] = cars[k].symbol;
-                        printf("La %s con simbolo %c si e' spostata in indietro in [%d][%d]\n", cars[k].name, cars[k].symbol,cars[k].x+1, cars[k].y+1);
-                        crashed = collision(cars);
-
-                    // Altrimenti rimani fermo    
-                    }else{
-                        printf("La %s con simbolo %c e' rimasta ferma\n\n", cars[k].name, cars[k].symbol);
-                    }
-                    break;
-                // Quando assumerà caso "destra", e l'auto non si trova sul bordo destro.    
-                case destra:
-                    
-                    if (cars[k].y < COLUMNS_AND_LINES-1){
-                        // Cancello vecchia posizione
-                        matrix[cars[k].x][cars[k].y] = ' ';
-                        // Muovo a destra 
-                        cars[k].y += 1;
-                        matrix[cars[k].x][cars[k].y] = cars[k].symbol;
-                        printf("La %s con simbolo %c si e' spostata a destra in [%d][%d]\n", cars[k].name, cars[k].symbol,cars[k].x+1, cars[k].y+1);
-                        crashed = collision(cars);
-
-                    // Altrimenti resta fermo   
-                    }else{
-                        printf("La %s con simbolo %c e' rimasta ferma\n\n", cars[k].name, cars[k].symbol);
-                    }
-                    break;
-
-                // Quando assumerà caso "sinistra", e l'auto non si trova sul bordo sinistro    
-                case sinistra:
-                    
-                    if (cars[k].y > 0) {
-                        // Cancello vecchia posizione
-                        matrix[cars[k].x][cars[k].y] = ' ';
-                        // Muovo a sinistra 
-                        cars[k].y -= 1;
-                        matrix[cars[k].x][cars[k].y] = cars[k].symbol;
-                        printf("La %s con simbolo %c si e' spostata sinistra in [%d][%d]\n", cars[k].name, cars[k].symbol,cars[k].x+1, cars[k].y+1);
-                        crashed = collision(cars);
-
-                    //  Altrimenti resta fermo  
-                    }else{
-                        printf("La %s con simbolo %c e' rimasta ferma\n\n", cars[k].name, cars[k].symbol);
-                    }
-                    
-                    break;
-                    
-                default:
-                    return 0;
-                    
-            
-            }
-            printf("premi 4 per verificare se e' avvenuto lo scontro' : ");
-            scanf("%d", &a);
-        }
-        printf("\n\n**********************************************************\n\n\n");
-        viewMatrix(matrix);
-    }
-    
-    
+   
     return 0;
 }
+
